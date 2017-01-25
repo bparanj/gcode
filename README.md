@@ -191,5 +191,77 @@ You can now create locations.
 https://github.com/alexreisner/geocoder
 
 
+Converting IP address to Location
+
+rails g model download ip
+rails db:migrate
+
+class Download < ApplicationRecord
+  geocoded_by :ip
+  after_validation :geocode
+  
+end
+
+> Download.create(ip: '209.249.19.173')
+   (0.1ms)  begin transaction
+   (0.1ms)  rollback transaction
+NoMethodError: undefined method `latitude=' for #<Download:0x007ffc5cdccd18>
+
+rails db:drop
+
+class CreateDownloads < ActiveRecord::Migration[5.0]
+  def change
+    create_table :downloads do |t|
+      t.string :ip
+      t.float :latitude
+      t.float :longitude
+
+      t.timestamps
+    end
+  end
+end
+
+rails db:migrate
+
+> Download.create(ip: '209.249.19.173')
+   (0.0ms)  begin transaction
+Geocoding API not responding fast enough (use Geocoder.configure(:timeout => ...) to set limit).
+  SQL (0.4ms)  INSERT INTO "downloads" ("ip", "created_at", "updated_at") VALUES (?, ?, ?)  [["ip", "209.249.19.173"], ["created_at", 2017-01-25 19:38:45 UTC], ["updated_at", 2017-01-25 19:38:45 UTC]]
+   (2.5ms)  commit transaction
+ => #<Download id: 1, ip: "209.249.19.173", latitude: nil, longitude: nil, created_at: "2017-01-25 19:38:45", updated_at: "2017-01-25 19:38:45">
+
+Add the config/initiazers/geocoder.rb:
+	 
+Geocoder::Configuration.timeout = 15
+
+> Download.create(ip: '209.249.19.173')
+   (0.1ms)  begin transaction
+  SQL (0.5ms)  INSERT INTO "downloads" ("ip", "latitude", "longitude", "created_at", "updated_at") VALUES (?, ?, ?, ?, ?)  [["ip", "209.249.19.173"], ["latitude", 37.8381], ["longitude", -122.1026], ["created_at", 2017-01-25 19:40:03 UTC], ["updated_at", 2017-01-25 19:40:03 UTC]]
+   (2.6ms)  commit transaction
+ => #<Download id: 2, ip: "209.249.19.173", latitude: 37.8381, longitude: -122.1026, created_at: "2017-01-25 19:40:03", updated_at: "2017-01-25 19:40:03">
+	 
+$ geocode 37.8381,  -122.1026
+Latitude:         37.8375726
+Longitude:        -122.1023373
+Full address:     Cross Path, Moraga, CA 94556, USA
+City:             Moraga
+State/province:   California
+Postal code:      94556
+Country:          United States
+Google map:       http://maps.google.com/maps?q=37.8375726,-122.1023373
+
+THe address private method in this example: https://github.com/alexreisner/geocoder/blob/master/examples/reverse_geocode_job.rb shows how to convert coordinates to an address.
+
+$rails c
+Loading development environment (Rails 5.0.1)
+> Geocoder.address([37.8381,  -122.1026])
+ => "Cross Path, Moraga, CA 94556, USA"
+> Geocoder.address([37.7618242,-122.39858709999999])
+ => "324 Arkansas St, San Francisco, CA 94107, USA"
+ 	 	 
+https://www.freemaptools.com/convert-us-zip-code-to-lat-lng.htm	 
 
 
+
+searchckick latest version breaks the autocomplete functionality because autocomplete is removed.
+https://rubyplus.com/articles/4031-Autocomplete-using-Typeahead-and-Searchkick-in-Rails-5
