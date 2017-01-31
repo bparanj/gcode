@@ -263,5 +263,3 @@ https://www.freemaptools.com/convert-us-zip-code-to-lat-lng.htm
 
 
 
-searchckick latest version breaks the autocomplete functionality because autocomplete is removed.
-https://rubyplus.com/articles/4031-Autocomplete-using-Typeahead-and-Searchkick-in-Rails-5
